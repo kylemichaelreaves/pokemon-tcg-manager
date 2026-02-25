@@ -1,6 +1,6 @@
 # Pokémon TCG Manager
 
-An app to manage Pokémon TCG 151 MEW & SVA2, by default. The scraper script can also scrape other decks too, if provided with the deck's (Japanese or English) link. 
+An app to manage Pokémon TCG 151 MEW & SVA2 
 
 ## Tech Stack
 
