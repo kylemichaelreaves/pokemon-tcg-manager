@@ -1,8 +1,7 @@
-const IMAGE_BASE_URL = process.env.IMAGE_BASE_URL || '';
-
 export function toImageUrl(imagePath: string | null): string | null {
-  if (!imagePath || !IMAGE_BASE_URL) return null;
-  const base = IMAGE_BASE_URL.replace(/\/+$/, '');
+  const baseUrl = process.env.IMAGE_BASE_URL || '';
+  if (!imagePath || !baseUrl) return null;
+  const base = baseUrl.replace(/\/+$/, '');
   const path = imagePath.replace(/^\/+/, '');
   return `${base}/${path}`;
 }

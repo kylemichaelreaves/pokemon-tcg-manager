@@ -12,7 +12,6 @@ export default [
   {
     files: ['src/__tests__/**/*.test.ts'],
     rules: {
-      '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
     },
   },
