@@ -1,0 +1,60 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: pokemon-tcg-db
+    env_file:
+      - ./config/.env.development
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/migrations/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql
+      - ./db/migrations/002_add_image_path.sql:/docker-entrypoint-initdb.d/002_add_image_path.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pokemon -d pokemon_cards"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    container_name: pokemon-tcg-backend
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./config/.env.development
+    environment:
+      DB_HOST: db
+      API_PORT: 3001
+      NODE_ENV: development
+      CORS_ORIGIN: http://localhost:3000
+      IMAGE_BASE_URL: http://localhost:3001/images
+      STATIC_IMAGES_DIR: /app/data/card-images
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend/src:/app/backend/src
+      - ./db/migrations:/app/db/migrations
+      - ./data/card-images:/app/data/card-images
+    command: npm run dev
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    container_name: pokemon-tcg-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_URL: http://localhost:3001
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/src:/app/frontend/src
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  pgdata:

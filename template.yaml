@@ -1,0 +1,290 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Pokemon TCG Manager - Backend API
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 256
+    Runtime: nodejs22.x
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        DB_HOST: !Ref DBHost
+        DB_PORT: !Ref DBPort
+        DB_NAME: !Ref DBName
+        DB_USER: !Ref DBUser
+        DB_PASSWORD: !Ref DBPassword
+        NODE_ENV: !Ref Environment
+        CORS_ORIGIN: !Ref CorsOrigin
+        IMAGE_BASE_URL: !Ref ImageBaseUrl
+
+Parameters:
+  DBHost:
+    Type: String
+    Default: localhost
+  DBPort:
+    Type: String
+    Default: '5432'
+  DBName:
+    Type: String
+    Default: pokemon_cards
+  DBUser:
+    Type: String
+    Default: pokemon
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Default: changeme
+  Environment:
+    Type: String
+    Default: development
+    AllowedValues:
+      - development
+      - staging
+      - production
+  CorsOrigin:
+    Type: String
+    Default: http://localhost:3000
+  ImageBaseUrl:
+    Type: String
+    Default: ''
+    Description: Base URL for card images (CloudFront distribution URL)
+
+Resources:
+  PokemonApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: $default
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref CorsOrigin
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+
+  # Cards (read-only catalog)
+  GetCardsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: dist/handlers/cards.getCards
+      CodeUri: backend/
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PokemonApi
+            Path: /api/cards
+            Method: GET
+    Metadata:
+      BuildMethod: makefile
+
+  GetCardByIdFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: dist/handlers/cards.getCardById
+      CodeUri: backend/
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PokemonApi
+            Path: /api/cards/{id}
+            Method: GET
+    Metadata:
+      BuildMethod: makefile
+
+  # Sets (reference data)
+  GetSetsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: dist/handlers/cards.getSets
+      CodeUri: backend/
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PokemonApi
+            Path: /api/sets
+            Method: GET
+    Metadata:
+      BuildMethod: makefile
+
+  # Collection
+  GetCollectionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: dist/handlers/collections.getCollection
+      CodeUri: backend/
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PokemonApi
+            Path: /api/collection
+            Method: GET
+    Metadata:
+      BuildMethod: makefile
+
+  AddToCollectionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: dist/handlers/collections.addToCollection
+      CodeUri: backend/
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PokemonApi
+            Path: /api/collection
+            Method: POST
+    Metadata:
+      BuildMethod: makefile
+
+  GetCollectionEntryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: dist/handlers/collections.getCollectionEntry
+      CodeUri: backend/
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PokemonApi
+            Path: /api/collection/{id}
+            Method: GET
+    Metadata:
+      BuildMethod: makefile
+
+  UpdateCollectionEntryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: dist/handlers/collections.updateCollectionEntry
+      CodeUri: backend/
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PokemonApi
+            Path: /api/collection/{id}
+            Method: PUT
+    Metadata:
+      BuildMethod: makefile
+
+  RemoveFromCollectionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: dist/handlers/collections.removeFromCollection
+      CodeUri: backend/
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PokemonApi
+            Path: /api/collection/{id}
+            Method: DELETE
+    Metadata:
+      BuildMethod: makefile
+
+  GetCompletionSummaryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: dist/handlers/collections.getCompletionSummary
+      CodeUri: backend/
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PokemonApi
+            Path: /api/collection/summary
+            Method: GET
+    Metadata:
+      BuildMethod: makefile
+
+  # Health
+  HealthCheckFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: dist/handlers/health.handler
+      CodeUri: backend/
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PokemonApi
+            Path: /api/health
+            Method: GET
+    Metadata:
+      BuildMethod: makefile
+
+  # S3 bucket for card images
+  CardImagesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${AWS::StackName}-card-images'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  CardImagesBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CardImagesBucket
+      PolicyDocument:
+        Statement:
+          - Sid: AllowCloudFrontOAC
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub '${CardImagesBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${CardImagesDistribution}'
+
+  CardImagesOAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub '${AWS::StackName}-card-images-oac'
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  CardImagesDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultCacheBehavior:
+          ViewerProtocolPolicy: redirect-to-https
+          TargetOriginId: S3Origin
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          Compress: true
+        Origins:
+          - Id: S3Origin
+            DomainName: !GetAtt CardImagesBucket.RegionalDomainName
+            OriginAccessControlId: !Ref CardImagesOAC
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+        Comment: Pokemon TCG Card Images CDN
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${PokemonApi}.execute-api.${AWS::Region}.amazonaws.com"
+  CardImagesBucketName:
+    Description: S3 bucket for card images
+    Value: !Ref CardImagesBucket
+  CardImagesDistributionDomain:
+    Description: CloudFront distribution domain for card images
+    Value: !GetAtt CardImagesDistribution.DomainName

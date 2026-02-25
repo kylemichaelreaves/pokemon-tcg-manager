@@ -1,0 +1,15 @@
+version = 0.1
+
+[default.build.parameters]
+use_container = true
+
+[default.deploy.parameters]
+stack_name = "pokemon-tcg-manager"
+resolve_s3 = true
+s3_prefix = "pokemon-tcg-manager"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+
+[default.local_start_api.parameters]
+warm_containers = "EAGER"

@@ -1,0 +1,29 @@
+{
+  "name": "pokemon-tcg-manager",
+  "private": true,
+  "workspaces": ["frontend", "backend"],
+  "scripts": {
+    "dev": "docker compose up --build",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "build": "npm run build --workspace=frontend && npm run build --workspace=backend",
+    "test": "npm run test --workspace=frontend && npm run test --workspace=backend",
+    "test:frontend": "npm run test --workspace=frontend",
+    "test:frontend:e2e": "npm run test:e2e --workspace=frontend",
+    "test:backend": "npm run test --workspace=backend",
+    "lint": "npm run lint --workspace=frontend && npm run lint --workspace=backend",
+    "lint:fix": "npm run lint:fix --workspace=frontend && npm run lint:fix --workspace=backend",
+    "format": "prettier --config config/.prettierrc.json --write .",
+    "format:check": "prettier --config config/.prettierrc.json --check .",
+    "db:migrate": "npm run migrate --workspace=backend",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down",
+    "docker:test": "docker compose -f docker-compose.test.yml up --build --abort-on-container-exit"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2"
+  }
+}
