@@ -9,7 +9,14 @@ const App: Component = () => {
     <div>
       <Header />
       <main class="container" style={{ 'padding-top': '2rem', 'padding-bottom': '2rem' }}>
-        <div style={{ display: 'flex', 'justify-content': 'space-between', 'align-items': 'center', 'margin-bottom': '1.5rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            'justify-content': 'space-between',
+            'align-items': 'center',
+            'margin-bottom': '1.5rem',
+          }}
+        >
           <h2 style={{ 'font-size': '1.5rem' }}>Card Catalog</h2>
         </div>
         <AddCardForm />

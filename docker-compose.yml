@@ -5,13 +5,13 @@ services:
     env_file:
       - ./config/.env.development
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./db/migrations/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql
       - ./db/migrations/002_add_image_path.sql:/docker-entrypoint-initdb.d/002_add_image_path.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pokemon -d pokemon_cards"]
+      test: ['CMD-SHELL', 'pg_isready -U pokemon -d pokemon_cards']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -22,7 +22,7 @@ services:
       dockerfile: docker/Dockerfile.backend
     container_name: pokemon-tcg-backend
     ports:
-      - "3001:3001"
+      - '3001:3001'
     env_file:
       - ./config/.env.development
     environment:
@@ -47,7 +47,7 @@ services:
       dockerfile: docker/Dockerfile.frontend
     container_name: pokemon-tcg-frontend
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       VITE_API_URL: http://localhost:3001
     depends_on:
