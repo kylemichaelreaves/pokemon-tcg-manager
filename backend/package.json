@@ -9,6 +9,8 @@
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "migrate": "tsx src/utils/migrate.ts",
+    "import": "tsx src/scripts/importCards.ts",
+    "import:dry-run": "tsx src/scripts/importCards.ts --dry-run",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix"
   },

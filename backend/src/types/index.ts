@@ -33,6 +33,9 @@ export interface CardSet {
   release_date: string | null;
   total_cards: number | null;
   total_with_sr: number | null;
+  api_id: string | null;
+  image_symbol_url: string | null;
+  image_logo_url: string | null;
 }
 
 // Collection entry from v_collection view (denormalized)

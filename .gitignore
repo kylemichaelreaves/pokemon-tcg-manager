@@ -17,3 +17,5 @@ dist/
 # IDE / tooling
 .idea/
 .claude/
+backend/coverage/
+frontend/node_modules/

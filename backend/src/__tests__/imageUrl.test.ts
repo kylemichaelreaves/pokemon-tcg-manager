@@ -45,4 +45,25 @@ describe('toImageUrl', () => {
     process.env.IMAGE_BASE_URL = '';
     expect(toImageUrl('cards/mew/006.png')).toBeNull();
   });
+
+  it('should return absolute https URLs as-is', () => {
+    process.env.IMAGE_BASE_URL = 'https://images.example.com';
+    expect(toImageUrl('https://images.pokemontcg.io/sv3pt5/1_hires.png')).toBe(
+      'https://images.pokemontcg.io/sv3pt5/1_hires.png',
+    );
+  });
+
+  it('should return absolute http URLs as-is', () => {
+    process.env.IMAGE_BASE_URL = 'https://images.example.com';
+    expect(toImageUrl('https://images.pokemontcg.io/sv3pt5/1.png')).toBe(
+      'https://images.pokemontcg.io/sv3pt5/1.png',
+    );
+  });
+
+  it('should return absolute URLs even when IMAGE_BASE_URL is not set', () => {
+    delete process.env.IMAGE_BASE_URL;
+    expect(toImageUrl('https://images.pokemontcg.io/sv3pt5/1_hires.png')).toBe(
+      'https://images.pokemontcg.io/sv3pt5/1_hires.png',
+    );
+  });
 });

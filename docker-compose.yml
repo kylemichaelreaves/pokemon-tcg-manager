@@ -1,17 +1,18 @@
 services:
   db:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     container_name: pokemon-tcg-db
     env_file:
       - ./config/.env.development
     ports:
       - '5432:5432'
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql
       - ./db/migrations/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql
       - ./db/migrations/002_add_image_path.sql:/docker-entrypoint-initdb.d/002_add_image_path.sql
+      - ./db/migrations/003_api_import_support.sql:/docker-entrypoint-initdb.d/003_api_import_support.sql
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U pokemon -d pokemon_cards']
+      test: [ 'CMD-SHELL', 'pg_isready -U pokemon -d pokemon_cards' ]
       interval: 5s
       timeout: 5s
       retries: 5

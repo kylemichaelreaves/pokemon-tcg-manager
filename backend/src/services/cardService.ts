@@ -105,7 +105,8 @@ export async function getCardById(id: number): Promise<CardResponse | null> {
 export async function getSets(): Promise<CardSet[]> {
   return query<CardSet>(
     `SELECT s.set_id, s.set_code, s.name, s.series, l.code AS language,
-            s.release_date, s.total_cards, s.total_with_sr
+            s.release_date, s.total_cards, s.total_with_sr,
+            s.api_id, s.image_symbol_url, s.image_logo_url
      FROM sets s
      JOIN languages l ON s.language_id = l.language_id
      ORDER BY s.release_date DESC`,

@@ -117,6 +117,9 @@ describe('Cards Handler', () => {
           release_date: '2023-09-22',
           total_cards: 165,
           total_with_sr: 207,
+          api_id: 'sv3pt5',
+          image_symbol_url: null,
+          image_logo_url: null,
         },
       ];
       mockCardService.getSets.mockResolvedValue(sampleSets);

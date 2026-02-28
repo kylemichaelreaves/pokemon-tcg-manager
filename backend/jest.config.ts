@@ -11,6 +11,7 @@ const config: Config = {
     '!src/utils/migrate.ts',
     '!src/utils/seed.ts',
     '!src/server.ts',
+    '!src/scripts/**',
   ],
   coverageDirectory: 'coverage',
   coverageThreshold: {
