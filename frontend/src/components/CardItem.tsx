@@ -31,7 +31,15 @@ const CardItem: Component<CardItemProps> = (props) => {
         </Show>
       </div>
 
-      <div style={{ display: 'flex', 'justify-content': 'space-between', 'align-items': 'flex-start', 'margin-top': '0.75rem', 'margin-bottom': '0.5rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          'justify-content': 'space-between',
+          'align-items': 'flex-start',
+          'margin-top': '0.75rem',
+          'margin-bottom': '0.5rem',
+        }}
+      >
         <h3 style={{ 'font-size': '1.1rem', 'font-weight': '600' }}>{props.card.name}</h3>
         <Show when={props.card.energy_type}>
           <span class={`badge badge-${props.card.energy_type.toLowerCase()}`}>
@@ -40,10 +48,10 @@ const CardItem: Component<CardItemProps> = (props) => {
         </Show>
       </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem', 'flex-wrap': 'wrap', 'margin-bottom': '0.75rem' }}>
-        <span class={badgeClass(props.card.rarity, 'rarity')}>
-          {props.card.rarity}
-        </span>
+      <div
+        style={{ display: 'flex', gap: '0.5rem', 'flex-wrap': 'wrap', 'margin-bottom': '0.75rem' }}
+      >
+        <span class={badgeClass(props.card.rarity, 'rarity')}>{props.card.rarity}</span>
         <span class="badge" style={{ background: '#f3f4f6', color: '#4b5563' }}>
           {props.card.card_type}
         </span>
@@ -59,7 +67,9 @@ const CardItem: Component<CardItemProps> = (props) => {
       </div>
 
       <div style={{ 'font-size': '0.85rem', color: 'var(--color-text-muted)' }}>
-        <div>{props.card.set_name} · #{props.card.card_number}</div>
+        <div>
+          {props.card.set_name} · #{props.card.card_number}
+        </div>
         <div>{props.card.language}</div>
         <Show when={props.card.pokedex_number}>
           <div>Pokedex #{props.card.pokedex_number}</div>

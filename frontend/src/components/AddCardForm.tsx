@@ -1,8 +1,22 @@
-import { Component, createSignal } from 'solid-js';
+import { Component, createSignal, For } from 'solid-js';
 import { api } from '../lib/api';
 
-const variantOptions = ['Standard', 'Reverse Holo', 'Poke Ball Mirror', 'Master Ball Mirror', 'Cosmos Holo', 'Promo'] as const;
-const conditionOptions = ['Mint', 'Near Mint', 'Lightly Played', 'Moderately Played', 'Heavily Played', 'Damaged'] as const;
+const variantOptions = [
+  'Standard',
+  'Reverse Holo',
+  'Poke Ball Mirror',
+  'Master Ball Mirror',
+  'Cosmos Holo',
+  'Promo',
+] as const;
+const conditionOptions = [
+  'Mint',
+  'Near Mint',
+  'Lightly Played',
+  'Moderately Played',
+  'Heavily Played',
+  'Damaged',
+] as const;
 
 interface AddCardFormProps {
   onAdded?: () => void;
@@ -73,7 +87,11 @@ const AddCardForm: Component<AddCardFormProps> = (props) => {
 
   return (
     <div>
-      <button class="btn btn-primary" onClick={() => setIsOpen(!isOpen())} data-testid="add-card-toggle">
+      <button
+        class="btn btn-primary"
+        onClick={() => setIsOpen(!isOpen())}
+        data-testid="add-card-toggle"
+      >
         {isOpen() ? 'Cancel' : '+ Add to Collection'}
       </button>
 
@@ -110,21 +128,22 @@ const AddCardForm: Component<AddCardFormProps> = (props) => {
             <div class="form-group">
               <label>Variant</label>
               <select value={variant()} onChange={(e) => setVariant(e.target.value)}>
-                {variantOptions.map((v) => (
-                  <option value={v}>{v}</option>
-                ))}
+                <For each={[...variantOptions]}>{(v) => <option value={v}>{v}</option>}</For>
               </select>
             </div>
             <div class="form-group">
               <label>Quantity</label>
-              <input type="number" value={quantity()} onInput={(e) => setQuantity(e.target.value)} min="1" />
+              <input
+                type="number"
+                value={quantity()}
+                onInput={(e) => setQuantity(e.target.value)}
+                min="1"
+              />
             </div>
             <div class="form-group">
               <label>Condition</label>
               <select value={condition()} onChange={(e) => setCondition(e.target.value)}>
-                {conditionOptions.map((c) => (
-                  <option value={c}>{c}</option>
-                ))}
+                <For each={[...conditionOptions]}>{(c) => <option value={c}>{c}</option>}</For>
               </select>
             </div>
             <div class="form-group">
@@ -142,21 +161,44 @@ const AddCardForm: Component<AddCardFormProps> = (props) => {
               <>
                 <div class="form-group">
                   <label>Grading Company</label>
-                  <input type="text" value={gradingCompany()} onInput={(e) => setGradingCompany(e.target.value)} maxLength={10} placeholder="e.g. PSA" />
+                  <input
+                    type="text"
+                    value={gradingCompany()}
+                    onInput={(e) => setGradingCompany(e.target.value)}
+                    maxLength={10}
+                    placeholder="e.g. PSA"
+                  />
                 </div>
                 <div class="form-group">
                   <label>Grade</label>
-                  <input type="number" value={grade()} onInput={(e) => setGrade(e.target.value)} min="0" max="10" step="0.5" />
+                  <input
+                    type="number"
+                    value={grade()}
+                    onInput={(e) => setGrade(e.target.value)}
+                    min="0"
+                    max="10"
+                    step="0.5"
+                  />
                 </div>
               </>
             )}
             <div class="form-group">
               <label>Date Acquired</label>
-              <input type="date" value={dateAcquired()} onInput={(e) => setDateAcquired(e.target.value)} />
+              <input
+                type="date"
+                value={dateAcquired()}
+                onInput={(e) => setDateAcquired(e.target.value)}
+              />
             </div>
             <div class="form-group">
               <label>Purchase Price ($)</label>
-              <input type="number" value={purchasePrice()} onInput={(e) => setPurchasePrice(e.target.value)} min="0" step="0.01" />
+              <input
+                type="number"
+                value={purchasePrice()}
+                onInput={(e) => setPurchasePrice(e.target.value)}
+                min="0"
+                step="0.01"
+              />
             </div>
           </div>
 

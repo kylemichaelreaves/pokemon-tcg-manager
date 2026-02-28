@@ -6,10 +6,7 @@ const [currentPage, setCurrentPage] = createSignal(1);
 const [sortBy, setSortBy] = createSignal<string>('name');
 const [sortOrder, setSortOrder] = createSignal<'asc' | 'desc'>('asc');
 const [filters, setFilters] = createSignal<CardFilters>({});
-const [refetchTrigger, setRefetchTrigger] = createSignal(0);
-
 function fetchParams() {
-  refetchTrigger();
   return {
     page: currentPage(),
     limit: 20,

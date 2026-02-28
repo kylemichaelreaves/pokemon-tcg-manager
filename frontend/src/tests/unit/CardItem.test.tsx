@@ -53,7 +53,12 @@ describe('CardItem', () => {
   });
 
   it('does not render pokedex number when null', () => {
-    const trainerCard = { ...mockCard, pokedex_number: null, card_type: 'Trainer', energy_type: '' };
+    const trainerCard = {
+      ...mockCard,
+      pokedex_number: null,
+      card_type: 'Trainer',
+      energy_type: '',
+    };
     render(() => <CardItem card={trainerCard} />);
     expect(screen.queryByText(/Pokedex/)).not.toBeInTheDocument();
   });

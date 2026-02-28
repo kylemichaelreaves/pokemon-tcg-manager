@@ -19,8 +19,8 @@ export async function getCollectionEntry(
   event: APIGatewayProxyEventV2,
 ): Promise<APIGatewayProxyResultV2> {
   try {
-    const id = parseInt(getPathParam(event, 'id'), 10);
-    if (isNaN(id)) return error('Invalid collection entry ID', 400);
+    const id = Number.parseInt(getPathParam(event, 'id'), 10);
+    if (Number.isNaN(id)) return error('Invalid collection entry ID', 400);
 
     const entry = await collectionService.getCollectionEntryById(id);
     if (!entry) return error('Collection entry not found', 404);
@@ -59,8 +59,8 @@ export async function updateCollectionEntry(
   event: APIGatewayProxyEventV2,
 ): Promise<APIGatewayProxyResultV2> {
   try {
-    const id = parseInt(getPathParam(event, 'id'), 10);
-    if (isNaN(id)) return error('Invalid collection entry ID', 400);
+    const id = Number.parseInt(getPathParam(event, 'id'), 10);
+    if (Number.isNaN(id)) return error('Invalid collection entry ID', 400);
 
     const body = parseBody(event);
     const input = updateCollectionSchema.parse(body);
@@ -81,8 +81,8 @@ export async function removeFromCollection(
   event: APIGatewayProxyEventV2,
 ): Promise<APIGatewayProxyResultV2> {
   try {
-    const id = parseInt(getPathParam(event, 'id'), 10);
-    if (isNaN(id)) return error('Invalid collection entry ID', 400);
+    const id = Number.parseInt(getPathParam(event, 'id'), 10);
+    if (Number.isNaN(id)) return error('Invalid collection entry ID', 400);
 
     const removed = await collectionService.removeFromCollection(id);
     if (!removed) return error('Collection entry not found', 404);

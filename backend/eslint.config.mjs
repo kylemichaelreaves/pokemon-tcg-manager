@@ -10,6 +10,12 @@ export default [
     },
   },
   {
+    files: ['src/__tests__/**/*.test.ts'],
+    rules: {
+      '@typescript-eslint/explicit-function-return-type': 'off',
+    },
+  },
+  {
     ignores: [...sharedIgnores, 'jest.config.ts'],
   },
 ];

@@ -19,9 +19,7 @@ export async function getCards(event: APIGatewayProxyEventV2): Promise<APIGatewa
   }
 }
 
-export async function getCardById(
-  event: APIGatewayProxyEventV2,
-): Promise<APIGatewayProxyResultV2> {
+export async function getCardById(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   try {
     const id = parseInt(getPathParam(event, 'id'), 10);
     if (isNaN(id)) return error('Invalid card ID', 400);
@@ -36,9 +34,7 @@ export async function getCardById(
   }
 }
 
-export async function getSets(
-  _event: APIGatewayProxyEventV2,
-): Promise<APIGatewayProxyResultV2> {
+export async function getSets(_event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   try {
     const sets = await cardService.getSets();
     return success(sets);
