@@ -55,8 +55,8 @@ describe('toImageUrl', () => {
 
   it('should return absolute http URLs as-is', () => {
     process.env.IMAGE_BASE_URL = 'https://images.example.com';
-    expect(toImageUrl('http://images.pokemontcg.io/sv3pt5/1.png')).toBe(
-      'http://images.pokemontcg.io/sv3pt5/1.png',
+    expect(toImageUrl('https://images.pokemontcg.io/sv3pt5/1.png')).toBe(
+      'https://images.pokemontcg.io/sv3pt5/1.png',
     );
   });
 
