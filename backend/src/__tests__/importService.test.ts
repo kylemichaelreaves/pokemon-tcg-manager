@@ -164,9 +164,7 @@ describe('importService', () => {
   describe('dry run', () => {
     it('should report set and card counts without writing to DB', async () => {
       // TCGdex returns array directly (no pagination wrapper)
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse([sampleSetSummary]),
-      );
+      mockFetch.mockResolvedValueOnce(mockJsonResponse([sampleSetSummary]));
 
       const result = await importFromApi({
         dryRun: true,
@@ -186,17 +184,11 @@ describe('importService', () => {
 
     it('should import a new set and its cards', async () => {
       // 1st: fetch sets list
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse([sampleSetSummary]),
-      );
+      mockFetch.mockResolvedValueOnce(mockJsonResponse([sampleSetSummary]));
       // 2nd: fetch set detail
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse(sampleSetDetail),
-      );
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(sampleSetDetail));
       // 3rd: fetch individual card
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse(sampleFullCard),
-      );
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(sampleFullCard));
 
       const result = await importFromApi({ setIds: ['sv04'] });
 
@@ -210,13 +202,9 @@ describe('importService', () => {
     it('should skip existing sets when force is false', async () => {
       setupStandardQueryMock(mockClient, { setExists: true });
 
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse([sampleSetSummary]),
-      );
+      mockFetch.mockResolvedValueOnce(mockJsonResponse([sampleSetSummary]));
       // Set detail still fetched to get series/cards
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse(sampleSetDetail),
-      );
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(sampleSetDetail));
 
       const result = await importFromApi({
         setIds: ['sv04'],
@@ -228,15 +216,9 @@ describe('importService', () => {
     });
 
     it('should call progress callback', async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse([sampleSetSummary]),
-      );
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse(sampleSetDetail),
-      );
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse(sampleFullCard),
-      );
+      mockFetch.mockResolvedValueOnce(mockJsonResponse([sampleSetSummary]));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(sampleSetDetail));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(sampleFullCard));
 
       const progressEvents: Array<{ phase: string; message: string }> = [];
       await importFromApi({
@@ -252,9 +234,7 @@ describe('importService', () => {
     });
 
     it('should capture set-level errors without crashing', async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse([sampleSetSummary]),
-      );
+      mockFetch.mockResolvedValueOnce(mockJsonResponse([sampleSetSummary]));
       // Set detail fetch fails
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
@@ -293,15 +273,9 @@ describe('importService', () => {
         ],
       };
 
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse([sampleSetSummary]),
-      );
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse(setWithTrainer),
-      );
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse(trainerCard),
-      );
+      mockFetch.mockResolvedValueOnce(mockJsonResponse([sampleSetSummary]));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(setWithTrainer));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(trainerCard));
 
       const result = await importFromApi({ setIds: ['sv04'] });
 
@@ -334,15 +308,9 @@ describe('importService', () => {
         ],
       };
 
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse([sampleSetSummary]),
-      );
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse(setWithEnergy),
-      );
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse(energyCard),
-      );
+      mockFetch.mockResolvedValueOnce(mockJsonResponse([sampleSetSummary]));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(setWithEnergy));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(energyCard));
 
       const result = await importFromApi({ setIds: ['sv04'] });
 
@@ -351,12 +319,8 @@ describe('importService', () => {
     });
 
     it('should work in quick mode without individual card fetches', async () => {
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse([sampleSetSummary]),
-      );
-      mockFetch.mockResolvedValueOnce(
-        mockJsonResponse(sampleSetDetail),
-      );
+      mockFetch.mockResolvedValueOnce(mockJsonResponse([sampleSetSummary]));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(sampleSetDetail));
       // No individual card fetch should happen in quick mode
 
       const result = await importFromApi({

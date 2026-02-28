@@ -17,11 +17,7 @@
  *   npx tsx backend/src/scripts/importCards.ts --quick --dry-run
  */
 
-import {
-  importFromApi,
-  ImportOptions,
-  ImportProgressEvent,
-} from '../services/importService';
+import { importFromApi, ImportOptions, ImportProgressEvent } from '../services/importService';
 import { closePool } from '../utils/db';
 
 function parseArgs(args: string[]): ImportOptions {
@@ -74,8 +70,7 @@ async function main(): Promise<void> {
 
   options.onProgress = (event: ImportProgressEvent) => {
     const prefix = event.phase === 'sets' ? '[sets]' : '[cards]';
-    const progress =
-      event.total > 0 ? ` (${event.current}/${event.total})` : '';
+    const progress = event.total > 0 ? ` (${event.current}/${event.total})` : '';
     console.log(`${prefix}${progress} ${event.message}`);
   };
 
@@ -92,36 +87,26 @@ async function main(): Promise<void> {
     console.log('Force mode — existing records will be updated\n');
   }
   if (options.quick) {
-    console.log(
-      'Quick mode — using card summaries only (no rarity/type data)\n',
-    );
+    console.log('Quick mode — using card summaries only (no rarity/type data)\n');
   }
 
   const result = await importFromApi(options);
 
   console.log('\n--- Import Summary ---');
-  console.log(
-    `Sets:  ${result.setsImported} imported, ${result.setsSkipped} skipped`,
-  );
+  console.log(`Sets:  ${result.setsImported} imported, ${result.setsSkipped} skipped`);
   console.log(
     `Cards: ${result.cardsImported} imported, ${result.cardsUpdated} updated, ${result.cardsSkipped} skipped`,
   );
   console.log(`Duration: ${(result.duration / 1000).toFixed(1)}s`);
 
   if (result.lookupTablesExtended.rarities.length > 0) {
-    console.log(
-      `\nNew rarities added: ${result.lookupTablesExtended.rarities.join(', ')}`,
-    );
+    console.log(`\nNew rarities added: ${result.lookupTablesExtended.rarities.join(', ')}`);
   }
   if (result.lookupTablesExtended.cardTypes.length > 0) {
-    console.log(
-      `New card types added: ${result.lookupTablesExtended.cardTypes.join(', ')}`,
-    );
+    console.log(`New card types added: ${result.lookupTablesExtended.cardTypes.join(', ')}`);
   }
   if (result.lookupTablesExtended.energyTypes.length > 0) {
-    console.log(
-      `New energy types added: ${result.lookupTablesExtended.energyTypes.join(', ')}`,
-    );
+    console.log(`New energy types added: ${result.lookupTablesExtended.energyTypes.join(', ')}`);
   }
 
   if (result.errors.length > 0) {
