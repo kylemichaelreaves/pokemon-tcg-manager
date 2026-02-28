@@ -12,7 +12,7 @@ services:
       - ./db/migrations/002_add_image_path.sql:/docker-entrypoint-initdb.d/002_add_image_path.sql
       - ./db/migrations/003_api_import_support.sql:/docker-entrypoint-initdb.d/003_api_import_support.sql
     healthcheck:
-      test: [ 'CMD-SHELL', 'pg_isready -U pokemon -d pokemon_cards' ]
+      test: ['CMD-SHELL', 'pg_isready -U pokemon -d pokemon_cards']
       interval: 5s
       timeout: 5s
       retries: 5

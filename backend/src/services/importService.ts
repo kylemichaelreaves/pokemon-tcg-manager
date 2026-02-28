@@ -87,10 +87,7 @@ async function fetchWithRetry<T>(
       });
 
       if (response.status === 429) {
-        const retryAfter = parseInt(
-          response.headers.get('retry-after') || '5',
-          10,
-        );
+        const retryAfter = parseInt(response.headers.get('retry-after') || '5', 10);
         console.warn(`Rate limited. Waiting ${retryAfter}s...`);
         await sleep(retryAfter * 1000);
         continue;
@@ -113,25 +110,17 @@ async function fetchWithRetry<T>(
   throw new Error('Unreachable');
 }
 
-async function fetchAllSets(
-  rateLimiter: RateLimiter,
-): Promise<TcgdexSetSummary[]> {
+async function fetchAllSets(rateLimiter: RateLimiter): Promise<TcgdexSetSummary[]> {
   const url = `${TCGDEX_API_BASE}/sets`;
   return fetchWithRetry<TcgdexSetSummary[]>(url, rateLimiter);
 }
 
-async function fetchSetDetail(
-  setId: string,
-  rateLimiter: RateLimiter,
-): Promise<TcgdexSetDetail> {
+async function fetchSetDetail(setId: string, rateLimiter: RateLimiter): Promise<TcgdexSetDetail> {
   const url = `${TCGDEX_API_BASE}/sets/${setId}`;
   return fetchWithRetry<TcgdexSetDetail>(url, rateLimiter);
 }
 
-async function fetchCard(
-  cardId: string,
-  rateLimiter: RateLimiter,
-): Promise<TcgdexCard> {
+async function fetchCard(cardId: string, rateLimiter: RateLimiter): Promise<TcgdexCard> {
   const url = `${TCGDEX_API_BASE}/cards/${cardId}`;
   return fetchWithRetry<TcgdexCard>(url, rateLimiter);
 }
@@ -146,9 +135,7 @@ interface LookupCache {
 
 async function loadLookupCache(client: PoolClient): Promise<LookupCache> {
   const [rarityRows, cardTypeRows, energyTypeRows] = await Promise.all([
-    client.query<{ rarity_id: number; name: string }>(
-      'SELECT rarity_id, name FROM rarities',
-    ),
+    client.query<{ rarity_id: number; name: string }>('SELECT rarity_id, name FROM rarities'),
     client.query<{ card_type_id: number; name: string }>(
       'SELECT card_type_id, name FROM card_types',
     ),
@@ -159,12 +146,8 @@ async function loadLookupCache(client: PoolClient): Promise<LookupCache> {
 
   return {
     rarities: new Map(rarityRows.rows.map((r) => [r.name, r.rarity_id])),
-    cardTypes: new Map(
-      cardTypeRows.rows.map((r) => [r.name, r.card_type_id]),
-    ),
-    energyTypes: new Map(
-      energyTypeRows.rows.map((r) => [r.name, r.energy_type_id]),
-    ),
+    cardTypes: new Map(cardTypeRows.rows.map((r) => [r.name, r.card_type_id])),
+    energyTypes: new Map(energyTypeRows.rows.map((r) => [r.name, r.energy_type_id])),
   };
 }
 
@@ -372,12 +355,7 @@ async function upsertCardFull(
     return 'skipped';
   }
 
-  const cardTypeId = await getOrCreateCardType(
-    card.category,
-    cache,
-    client,
-    newLookups.cardTypes,
-  );
+  const cardTypeId = await getOrCreateCardType(card.category, cache, client, newLookups.cardTypes);
   const energyTypeId = await getOrCreateEnergyType(
     card.types?.[0],
     cache,
@@ -386,19 +364,13 @@ async function upsertCardFull(
   );
 
   const rarityName = card.rarity || 'Unknown';
-  const rarityId = await getOrCreateRarity(
-    rarityName,
-    cache,
-    client,
-    newLookups.rarities,
-  );
+  const rarityId = await getOrCreateRarity(rarityName, cache, client, newLookups.rarities);
 
   const pokedexNumber = card.dexId?.[0] ?? null;
   const isPokemonEx = isSpecialPokemon(card);
   const secretRare = isSecretRare(card.localId, officialCount);
   const promo = isPromoCard(card.rarity, card.set.id);
-  const hasHoloVariant =
-    card.variants?.holo === true || card.variants?.reverse === true;
+  const hasHoloVariant = card.variants?.holo === true || card.variants?.reverse === true;
   const imagePath = cardImageUrl(card.image);
 
   if (existingByApiId.rows.length > 0) {
@@ -441,12 +413,7 @@ async function upsertCardFull(
       `UPDATE cards SET
         api_id = $1, image_path = $2, api_data = $3, imported_at = NOW()
        WHERE card_id = $4`,
-      [
-        card.id,
-        imagePath,
-        JSON.stringify(card),
-        existingByNumber.rows[0].card_id,
-      ],
+      [card.id, imagePath, JSON.stringify(card), existingByNumber.rows[0].card_id],
     );
     return 'updated';
   }
@@ -500,12 +467,7 @@ async function upsertCardQuick(
 
   const cardTypeId = cache.cardTypes.get('Pokémon') ?? 1;
   const energyTypeId = cache.energyTypes.get('None') ?? 11;
-  const rarityId = await getOrCreateRarity(
-    'Unknown',
-    cache,
-    client,
-    newLookups.rarities,
-  );
+  const rarityId = await getOrCreateRarity('Unknown', cache, client, newLookups.rarities);
 
   const secretRare = isSecretRare(cardSummary.localId, officialCount);
   const imagePath = cardImageUrl(cardSummary.image);
@@ -563,9 +525,7 @@ async function upsertCardQuick(
 
 // ── Main orchestrator ──────────────────────────────────────
 
-export async function importFromApi(
-  options: ImportOptions = {},
-): Promise<ImportResult> {
+export async function importFromApi(options: ImportOptions = {}): Promise<ImportResult> {
   const {
     setIds,
     dryRun = false,
@@ -691,10 +651,7 @@ export async function importFromApi(
                     result.lookupTablesExtended,
                   );
                 } else {
-                  const fullCard = await fetchCard(
-                    cardSummary.id,
-                    rateLimiter,
-                  );
+                  const fullCard = await fetchCard(cardSummary.id, rateLimiter);
                   action = await upsertCardFull(
                     fullCard,
                     setResult.setId,
@@ -713,8 +670,7 @@ export async function importFromApi(
                 result.errors.push({
                   setId: apiSet.id,
                   cardId: cardSummary.id,
-                  error:
-                    err instanceof Error ? err.message : String(err),
+                  error: err instanceof Error ? err.message : String(err),
                 });
               }
             }
