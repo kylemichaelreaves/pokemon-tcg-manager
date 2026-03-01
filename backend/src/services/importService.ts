@@ -642,10 +642,7 @@ export async function importFromApi(options: ImportOptions = {}): Promise<Import
       try {
         // When not forcing, skip sets that already exist before fetching detail
         if (!force) {
-          const existing = await client.query(
-            'SELECT 1 FROM sets WHERE api_id = $1',
-            [apiSet.id],
-          );
+          const existing = await client.query('SELECT 1 FROM sets WHERE api_id = $1', [apiSet.id]);
           if (existing.rows.length > 0) {
             result.setsSkipped++;
             continue;
