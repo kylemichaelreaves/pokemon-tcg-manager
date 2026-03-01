@@ -161,6 +161,19 @@ function generateCode(name: string): string {
     .substring(0, 10);
 }
 
+async function generateUniqueCode(name: string, client: PoolClient): Promise<string> {
+  const base = generateCode(name);
+  const existing = await client.query('SELECT 1 FROM rarities WHERE code = $1', [base]);
+  if (existing.rows.length === 0) return base;
+
+  for (let i = 2; i <= 99; i++) {
+    const candidate = `${base.substring(0, 8)}${i}`;
+    const check = await client.query('SELECT 1 FROM rarities WHERE code = $1', [candidate]);
+    if (check.rows.length === 0) return candidate;
+  }
+  throw new Error(`Unable to generate unique code for rarity: ${name}`);
+}
+
 async function getOrCreateRarity(
   name: string,
   cache: LookupCache,
@@ -170,23 +183,31 @@ async function getOrCreateRarity(
   const cached = cache.rarities.get(name);
   if (cached !== undefined) return cached;
 
-  const code = generateCode(name);
-  await client.query(
-    `INSERT INTO rarities (rarity_id, code, name, language_id, sort_order)
-     VALUES (nextval('rarities_rarity_id_seq'), $1, $2, NULL, nextval('rarities_rarity_id_seq'))
-     ON CONFLICT (name) DO NOTHING`,
-    [code, name],
-  );
-
-  const result = await client.query<{ rarity_id: number }>(
+  const existing = await client.query<{ rarity_id: number }>(
     'SELECT rarity_id FROM rarities WHERE name = $1',
     [name],
   );
+  if (existing.rows.length > 0) {
+    const id = existing.rows[0].rarity_id;
+    cache.rarities.set(name, id);
+    return id;
+  }
 
-  const id = result.rows[0].rarity_id;
-  cache.rarities.set(name, id);
+  const code = await generateUniqueCode(name, client);
+  const seqResult = await client.query<{ id: number }>(
+    "SELECT nextval('rarities_rarity_id_seq')::int AS id",
+  );
+  const newId = seqResult.rows[0].id;
+
+  await client.query(
+    `INSERT INTO rarities (rarity_id, code, name, language_id, sort_order)
+     VALUES ($1, $2, $3, NULL, $4)`,
+    [newId, code, name, newId],
+  );
+
+  cache.rarities.set(name, newId);
   if (!newRarities.includes(name)) newRarities.push(name);
-  return id;
+  return newId;
 }
 
 function deriveCardTypeName(category: string): string {
@@ -634,6 +655,24 @@ export async function importFromApi(options: ImportOptions = {}): Promise<Import
         for (let j = 0; j < cardSummaries.length; j += batchSize) {
           const batch = cardSummaries.slice(j, j + batchSize);
 
+          // In non-quick mode, fetch full card data before opening the transaction
+          // to avoid holding a DB transaction open during slow network I/O.
+          const fullCards = new Map<string, TcgdexCard>();
+          if (!quick) {
+            for (const cardSummary of batch) {
+              try {
+                const fullCard = await fetchCard(cardSummary.id, rateLimiter);
+                fullCards.set(cardSummary.id, fullCard);
+              } catch (err) {
+                result.errors.push({
+                  setId: apiSet.id,
+                  cardId: cardSummary.id,
+                  error: err instanceof Error ? err.message : String(err),
+                });
+              }
+            }
+          }
+
           await client.query('BEGIN');
           try {
             for (const cardSummary of batch) {
@@ -651,7 +690,8 @@ export async function importFromApi(options: ImportOptions = {}): Promise<Import
                     result.lookupTablesExtended,
                   );
                 } else {
-                  const fullCard = await fetchCard(cardSummary.id, rateLimiter);
+                  const fullCard = fullCards.get(cardSummary.id);
+                  if (!fullCard) continue; // fetch failed; error already recorded
                   action = await upsertCardFull(
                     fullCard,
                     setResult.setId,
