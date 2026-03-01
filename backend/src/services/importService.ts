@@ -11,6 +11,7 @@ import type { PoolClient } from 'pg';
 
 const TCGDEX_API_BASE = 'https://api.tcgdex.net/v2/en';
 const DEFAULT_REQUEST_DELAY_MS = 100;
+const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
 
 // ── Public types ───────────────────────────────────────────
 
@@ -77,13 +78,18 @@ async function fetchWithRetry<T>(
   url: string,
   rateLimiter: RateLimiter,
   maxRetries: number = 3,
+  timeoutMs: number = DEFAULT_REQUEST_TIMEOUT_MS,
 ): Promise<T> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     await rateLimiter.throttle();
 
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
     try {
       const response = await fetch(url, {
         headers: { Accept: 'application/json' },
+        signal: controller.signal,
       });
 
       if (response.status === 429) {
@@ -99,12 +105,19 @@ async function fetchWithRetry<T>(
 
       return (await response.json()) as T;
     } catch (err) {
-      if (attempt === maxRetries) throw err;
+      const message =
+        err instanceof DOMException && err.name === 'AbortError'
+          ? `Request timed out after ${timeoutMs}ms`
+          : err instanceof Error
+            ? err.message
+            : String(err);
+
+      if (attempt === maxRetries) throw new Error(message);
       const delay = Math.pow(2, attempt) * 1000;
-      console.warn(
-        `Attempt ${attempt} failed: ${err instanceof Error ? err.message : err}. Retrying in ${delay}ms...`,
-      );
+      console.warn(`Attempt ${attempt} failed: ${message}. Retrying in ${delay}ms...`);
       await sleep(delay);
+    } finally {
+      clearTimeout(timer);
     }
   }
   throw new Error('Unreachable');
@@ -627,6 +640,18 @@ export async function importFromApi(options: ImportOptions = {}): Promise<Import
       });
 
       try {
+        // When not forcing, skip sets that already exist before fetching detail
+        if (!force) {
+          const existing = await client.query(
+            'SELECT 1 FROM sets WHERE api_id = $1',
+            [apiSet.id],
+          );
+          if (existing.rows.length > 0) {
+            result.setsSkipped++;
+            continue;
+          }
+        }
+
         // Fetch set detail for series, release date, and card list
         const setDetail = await fetchSetDetail(apiSet.id, rateLimiter);
 
