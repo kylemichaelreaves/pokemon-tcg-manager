@@ -26,9 +26,15 @@ function parseArgs(args: string[]): ImportOptions {
 
   for (let i = 0; i < args.length; i++) {
     switch (args[i]) {
-      case '--set':
-        setIds.push(args[++i]);
+      case '--set': {
+        const value = args[++i];
+        if (!value || value.startsWith('--')) {
+          console.error('Error: --set requires a set ID (e.g. --set sv03.5)');
+          process.exit(1);
+        }
+        setIds.push(value);
         break;
+      }
       case '--dry-run':
         options.dryRun = true;
         break;
