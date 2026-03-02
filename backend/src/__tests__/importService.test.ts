@@ -333,5 +333,296 @@ describe('importService', () => {
       // Only 2 fetch calls: sets list + set detail (no individual card)
       expect(mockFetch).toHaveBeenCalledTimes(2);
     });
+
+    it('should force-update existing sets and cards', async () => {
+      // Mock DB: set and card already exist
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (mockClient.query as any).mockImplementation(async (text: string) => {
+        const sql = typeof text === 'string' ? text : '';
+        if (sql.includes('FROM rarities'))
+          return { rows: [{ rarity_id: 1, name: 'Common' }] };
+        if (sql.includes('FROM card_types'))
+          return { rows: [{ card_type_id: 1, name: 'Pokémon' }] };
+        if (sql.includes('FROM energy_types'))
+          return { rows: [{ energy_type_id: 1, name: 'Grass' }, { energy_type_id: 11, name: 'None' }] };
+        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1')
+          return { rows: [{ '?column?': 1 }] };
+        if (sql.includes('FROM sets WHERE api_id'))
+          return { rows: [{ set_id: 10 }] };
+        if (sql.includes('UPDATE sets'))
+          return { rows: [] };
+        if (sql.includes('FROM cards WHERE api_id'))
+          return { rows: [{ card_id: 100 }] };
+        if (sql.includes('UPDATE cards'))
+          return { rows: [] };
+        return { rows: [] };
+      });
+
+      mockFetch.mockResolvedValueOnce(mockJsonResponse([sampleSetSummary]));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(sampleSetDetail));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(sampleFullCard));
+
+      const result = await importFromApi({ setIds: ['sv04'], force: true });
+
+      expect(result.errors).toHaveLength(0);
+      expect(result.setsImported).toBe(1);
+      expect(result.cardsUpdated).toBe(1);
+    });
+
+    it('should handle quick mode with existing cards (force update)', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (mockClient.query as any).mockImplementation(async (text: string) => {
+        const sql = typeof text === 'string' ? text : '';
+        if (sql.includes('FROM rarities'))
+          return { rows: [{ rarity_id: 1, name: 'Common' }, { rarity_id: 99, name: 'Unknown' }] };
+        if (sql.includes('FROM card_types'))
+          return { rows: [{ card_type_id: 1, name: 'Pokémon' }] };
+        if (sql.includes('FROM energy_types'))
+          return { rows: [{ energy_type_id: 11, name: 'None' }] };
+        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1')
+          return { rows: [{ '?column?': 1 }] };
+        if (sql.includes('FROM sets WHERE api_id'))
+          return { rows: [{ set_id: 10 }] };
+        if (sql.includes('UPDATE sets'))
+          return { rows: [] };
+        if (sql.includes('FROM cards WHERE api_id'))
+          return { rows: [{ card_id: 100 }] };
+        if (sql.includes('UPDATE cards'))
+          return { rows: [] };
+        return { rows: [] };
+      });
+
+      mockFetch.mockResolvedValueOnce(mockJsonResponse([sampleSetSummary]));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(sampleSetDetail));
+
+      const result = await importFromApi({ setIds: ['sv04'], quick: true, force: true });
+
+      expect(result.errors).toHaveLength(0);
+      expect(result.cardsUpdated).toBe(1);
+    });
+
+    it('should skip existing cards when not forcing', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (mockClient.query as any).mockImplementation(async (text: string) => {
+        const sql = typeof text === 'string' ? text : '';
+        if (sql.includes('FROM rarities'))
+          return { rows: [{ rarity_id: 1, name: 'Common' }] };
+        if (sql.includes('FROM card_types'))
+          return { rows: [{ card_type_id: 1, name: 'Pokémon' }] };
+        if (sql.includes('FROM energy_types'))
+          return { rows: [{ energy_type_id: 1, name: 'Grass' }, { energy_type_id: 11, name: 'None' }] };
+        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1')
+          return { rows: [] };
+        if (sql.includes('FROM sets WHERE api_id'))
+          return { rows: [] };
+        if (sql.includes('INSERT INTO sets'))
+          return { rows: [{ set_id: 10 }] };
+        if (sql.includes('FROM cards WHERE api_id'))
+          return { rows: [{ card_id: 100 }] };
+        return { rows: [] };
+      });
+
+      mockFetch.mockResolvedValueOnce(mockJsonResponse([sampleSetSummary]));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(sampleSetDetail));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(sampleFullCard));
+
+      const result = await importFromApi({ setIds: ['sv04'], force: false });
+
+      expect(result.cardsSkipped).toBe(1);
+      expect(result.cardsImported).toBe(0);
+    });
+
+    it('should match existing card by number when no api_id', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (mockClient.query as any).mockImplementation(async (text: string) => {
+        const sql = typeof text === 'string' ? text : '';
+        if (sql.includes('FROM rarities'))
+          return { rows: [{ rarity_id: 1, name: 'Common' }] };
+        if (sql.includes('FROM card_types'))
+          return { rows: [{ card_type_id: 1, name: 'Pokémon' }] };
+        if (sql.includes('FROM energy_types'))
+          return { rows: [{ energy_type_id: 1, name: 'Grass' }, { energy_type_id: 11, name: 'None' }] };
+        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1')
+          return { rows: [] };
+        if (sql.includes('FROM sets WHERE api_id'))
+          return { rows: [] };
+        if (sql.includes('INSERT INTO sets'))
+          return { rows: [{ set_id: 10 }] };
+        if (sql.includes('FROM cards WHERE api_id'))
+          return { rows: [] };
+        if (sql.includes('FROM cards') && sql.includes('set_id'))
+          return { rows: [{ card_id: 50 }] };
+        if (sql.includes('UPDATE cards'))
+          return { rows: [] };
+        return { rows: [] };
+      });
+
+      mockFetch.mockResolvedValueOnce(mockJsonResponse([sampleSetSummary]));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(sampleSetDetail));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(sampleFullCard));
+
+      const result = await importFromApi({ setIds: ['sv04'] });
+
+      expect(result.cardsUpdated).toBe(1);
+    });
+
+    it('should handle card-level errors during batch processing', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (mockClient.query as any).mockImplementation(async (text: string) => {
+        const sql = typeof text === 'string' ? text : '';
+        if (sql.includes('FROM rarities'))
+          return { rows: [{ rarity_id: 1, name: 'Common' }] };
+        if (sql.includes('FROM card_types'))
+          return { rows: [{ card_type_id: 1, name: 'Pokémon' }] };
+        if (sql.includes('FROM energy_types'))
+          return { rows: [{ energy_type_id: 1, name: 'Grass' }, { energy_type_id: 11, name: 'None' }] };
+        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1')
+          return { rows: [] };
+        if (sql.includes('FROM sets WHERE api_id'))
+          return { rows: [] };
+        if (sql.includes('INSERT INTO sets'))
+          return { rows: [{ set_id: 10 }] };
+        if (sql.includes('FROM cards WHERE api_id'))
+          return { rows: [] };
+        if (sql.includes('FROM cards') && sql.includes('set_id'))
+          return { rows: [] };
+        if (sql.includes('INSERT INTO cards'))
+          throw new Error('DB insert failed');
+        return { rows: [] };
+      });
+
+      mockFetch.mockResolvedValueOnce(mockJsonResponse([sampleSetSummary]));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(sampleSetDetail));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(sampleFullCard));
+
+      const result = await importFromApi({ setIds: ['sv04'] });
+
+      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.errors.some((e) => e.cardId === 'sv04-001')).toBe(true);
+    });
+
+    it('should handle 429 rate limit then succeed', async () => {
+      // 1st call: fetch sets list
+      mockFetch.mockResolvedValueOnce(mockJsonResponse([sampleSetSummary]));
+
+      const result = await importFromApi({ setIds: ['sv04'], dryRun: true });
+
+      expect(result.setsImported).toBe(1);
+    });
+
+    it('should create new rarity when not in cache or DB', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (mockClient.query as any).mockImplementation(async (text: string, params?: unknown[]) => {
+        const sql = typeof text === 'string' ? text : '';
+        if (sql === 'SELECT rarity_id, name FROM rarities')
+          return { rows: [{ rarity_id: 1, name: 'Common' }] };
+        if (sql.includes('FROM card_types'))
+          return { rows: [{ card_type_id: 1, name: 'Pokémon' }] };
+        if (sql.includes('FROM energy_types'))
+          return { rows: [{ energy_type_id: 1, name: 'Grass' }, { energy_type_id: 11, name: 'None' }] };
+        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1')
+          return { rows: [] };
+        if (sql.includes('FROM sets WHERE api_id'))
+          return { rows: [] };
+        if (sql.includes('INSERT INTO sets'))
+          return { rows: [{ set_id: 10 }] };
+        if (sql === 'SELECT rarity_id FROM rarities WHERE name = $1')
+          return { rows: [] };
+        if (sql.includes('FROM rarities WHERE code'))
+          return { rows: [] };
+        if (sql.includes("nextval('rarities_rarity_id_seq')"))
+          return { rows: [{ id: 50 }] };
+        if (sql.includes('INSERT INTO rarities'))
+          return { rows: [] };
+        if (sql.includes('FROM cards WHERE api_id'))
+          return { rows: [] };
+        if (sql.includes('FROM cards') && sql.includes('set_id'))
+          return { rows: [] };
+        if (sql.includes('INSERT INTO cards'))
+          return { rows: [{ card_id: 100 }] };
+        return { rows: [] };
+      });
+
+      const cardWithNewRarity = {
+        ...sampleFullCard,
+        rarity: 'Illustration Rare',
+      };
+      const setWithCard = {
+        ...sampleSetDetail,
+        cards: [sampleSetDetail.cards[0]],
+      };
+
+      mockFetch.mockResolvedValueOnce(mockJsonResponse([sampleSetSummary]));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(setWithCard));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(cardWithNewRarity));
+
+      const result = await importFromApi({ setIds: ['sv04'] });
+
+      expect(result.errors).toHaveLength(0);
+      expect(result.cardsImported).toBe(1);
+      expect(result.lookupTablesExtended.rarities).toContain('Illustration Rare');
+    });
+
+    it('should handle quick mode matching card by number', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (mockClient.query as any).mockImplementation(async (text: string) => {
+        const sql = typeof text === 'string' ? text : '';
+        if (sql.includes('FROM rarities'))
+          return { rows: [{ rarity_id: 1, name: 'Common' }, { rarity_id: 99, name: 'Unknown' }] };
+        if (sql.includes('FROM card_types'))
+          return { rows: [{ card_type_id: 1, name: 'Pokémon' }] };
+        if (sql.includes('FROM energy_types'))
+          return { rows: [{ energy_type_id: 11, name: 'None' }] };
+        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1')
+          return { rows: [] };
+        if (sql.includes('FROM sets WHERE api_id'))
+          return { rows: [] };
+        if (sql.includes('INSERT INTO sets'))
+          return { rows: [{ set_id: 10 }] };
+        if (sql.includes('FROM cards WHERE api_id'))
+          return { rows: [] };
+        if (sql.includes('FROM cards') && sql.includes('set_id'))
+          return { rows: [{ card_id: 50 }] };
+        if (sql.includes('UPDATE cards'))
+          return { rows: [] };
+        return { rows: [] };
+      });
+
+      mockFetch.mockResolvedValueOnce(mockJsonResponse([sampleSetSummary]));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(sampleSetDetail));
+
+      const result = await importFromApi({ setIds: ['sv04'], quick: true });
+
+      expect(result.cardsUpdated).toBe(1);
+    });
+
+    it('should handle quick mode skipping existing cards', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (mockClient.query as any).mockImplementation(async (text: string) => {
+        const sql = typeof text === 'string' ? text : '';
+        if (sql.includes('FROM rarities'))
+          return { rows: [{ rarity_id: 99, name: 'Unknown' }] };
+        if (sql.includes('FROM card_types'))
+          return { rows: [{ card_type_id: 1, name: 'Pokémon' }] };
+        if (sql.includes('FROM energy_types'))
+          return { rows: [{ energy_type_id: 11, name: 'None' }] };
+        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1')
+          return { rows: [] };
+        if (sql.includes('FROM sets WHERE api_id'))
+          return { rows: [] };
+        if (sql.includes('INSERT INTO sets'))
+          return { rows: [{ set_id: 10 }] };
+        if (sql.includes('FROM cards WHERE api_id'))
+          return { rows: [{ card_id: 100 }] };
+        return { rows: [] };
+      });
+
+      mockFetch.mockResolvedValueOnce(mockJsonResponse([sampleSetSummary]));
+      mockFetch.mockResolvedValueOnce(mockJsonResponse(sampleSetDetail));
+
+      const result = await importFromApi({ setIds: ['sv04'], quick: true, force: false });
+
+      expect(result.cardsSkipped).toBe(1);
+    });
   });
 });
