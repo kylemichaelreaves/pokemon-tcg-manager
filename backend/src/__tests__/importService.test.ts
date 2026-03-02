@@ -339,22 +339,21 @@ describe('importService', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (mockClient.query as any).mockImplementation(async (text: string) => {
         const sql = typeof text === 'string' ? text : '';
-        if (sql.includes('FROM rarities'))
-          return { rows: [{ rarity_id: 1, name: 'Common' }] };
+        if (sql.includes('FROM rarities')) return { rows: [{ rarity_id: 1, name: 'Common' }] };
         if (sql.includes('FROM card_types'))
           return { rows: [{ card_type_id: 1, name: 'Pokémon' }] };
         if (sql.includes('FROM energy_types'))
-          return { rows: [{ energy_type_id: 1, name: 'Grass' }, { energy_type_id: 11, name: 'None' }] };
-        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1')
-          return { rows: [{ '?column?': 1 }] };
-        if (sql.includes('FROM sets WHERE api_id'))
-          return { rows: [{ set_id: 10 }] };
-        if (sql.includes('UPDATE sets'))
-          return { rows: [] };
-        if (sql.includes('FROM cards WHERE api_id'))
-          return { rows: [{ card_id: 100 }] };
-        if (sql.includes('UPDATE cards'))
-          return { rows: [] };
+          return {
+            rows: [
+              { energy_type_id: 1, name: 'Grass' },
+              { energy_type_id: 11, name: 'None' },
+            ],
+          };
+        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1') return { rows: [{ '?column?': 1 }] };
+        if (sql.includes('FROM sets WHERE api_id')) return { rows: [{ set_id: 10 }] };
+        if (sql.includes('UPDATE sets')) return { rows: [] };
+        if (sql.includes('FROM cards WHERE api_id')) return { rows: [{ card_id: 100 }] };
+        if (sql.includes('UPDATE cards')) return { rows: [] };
         return { rows: [] };
       });
 
@@ -374,21 +373,21 @@ describe('importService', () => {
       (mockClient.query as any).mockImplementation(async (text: string) => {
         const sql = typeof text === 'string' ? text : '';
         if (sql.includes('FROM rarities'))
-          return { rows: [{ rarity_id: 1, name: 'Common' }, { rarity_id: 99, name: 'Unknown' }] };
+          return {
+            rows: [
+              { rarity_id: 1, name: 'Common' },
+              { rarity_id: 99, name: 'Unknown' },
+            ],
+          };
         if (sql.includes('FROM card_types'))
           return { rows: [{ card_type_id: 1, name: 'Pokémon' }] };
         if (sql.includes('FROM energy_types'))
           return { rows: [{ energy_type_id: 11, name: 'None' }] };
-        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1')
-          return { rows: [{ '?column?': 1 }] };
-        if (sql.includes('FROM sets WHERE api_id'))
-          return { rows: [{ set_id: 10 }] };
-        if (sql.includes('UPDATE sets'))
-          return { rows: [] };
-        if (sql.includes('FROM cards WHERE api_id'))
-          return { rows: [{ card_id: 100 }] };
-        if (sql.includes('UPDATE cards'))
-          return { rows: [] };
+        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1') return { rows: [{ '?column?': 1 }] };
+        if (sql.includes('FROM sets WHERE api_id')) return { rows: [{ set_id: 10 }] };
+        if (sql.includes('UPDATE sets')) return { rows: [] };
+        if (sql.includes('FROM cards WHERE api_id')) return { rows: [{ card_id: 100 }] };
+        if (sql.includes('UPDATE cards')) return { rows: [] };
         return { rows: [] };
       });
 
@@ -405,20 +404,20 @@ describe('importService', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (mockClient.query as any).mockImplementation(async (text: string) => {
         const sql = typeof text === 'string' ? text : '';
-        if (sql.includes('FROM rarities'))
-          return { rows: [{ rarity_id: 1, name: 'Common' }] };
+        if (sql.includes('FROM rarities')) return { rows: [{ rarity_id: 1, name: 'Common' }] };
         if (sql.includes('FROM card_types'))
           return { rows: [{ card_type_id: 1, name: 'Pokémon' }] };
         if (sql.includes('FROM energy_types'))
-          return { rows: [{ energy_type_id: 1, name: 'Grass' }, { energy_type_id: 11, name: 'None' }] };
-        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1')
-          return { rows: [] };
-        if (sql.includes('FROM sets WHERE api_id'))
-          return { rows: [] };
-        if (sql.includes('INSERT INTO sets'))
-          return { rows: [{ set_id: 10 }] };
-        if (sql.includes('FROM cards WHERE api_id'))
-          return { rows: [{ card_id: 100 }] };
+          return {
+            rows: [
+              { energy_type_id: 1, name: 'Grass' },
+              { energy_type_id: 11, name: 'None' },
+            ],
+          };
+        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1') return { rows: [] };
+        if (sql.includes('FROM sets WHERE api_id')) return { rows: [] };
+        if (sql.includes('INSERT INTO sets')) return { rows: [{ set_id: 10 }] };
+        if (sql.includes('FROM cards WHERE api_id')) return { rows: [{ card_id: 100 }] };
         return { rows: [] };
       });
 
@@ -436,24 +435,23 @@ describe('importService', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (mockClient.query as any).mockImplementation(async (text: string) => {
         const sql = typeof text === 'string' ? text : '';
-        if (sql.includes('FROM rarities'))
-          return { rows: [{ rarity_id: 1, name: 'Common' }] };
+        if (sql.includes('FROM rarities')) return { rows: [{ rarity_id: 1, name: 'Common' }] };
         if (sql.includes('FROM card_types'))
           return { rows: [{ card_type_id: 1, name: 'Pokémon' }] };
         if (sql.includes('FROM energy_types'))
-          return { rows: [{ energy_type_id: 1, name: 'Grass' }, { energy_type_id: 11, name: 'None' }] };
-        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1')
-          return { rows: [] };
-        if (sql.includes('FROM sets WHERE api_id'))
-          return { rows: [] };
-        if (sql.includes('INSERT INTO sets'))
-          return { rows: [{ set_id: 10 }] };
-        if (sql.includes('FROM cards WHERE api_id'))
-          return { rows: [] };
+          return {
+            rows: [
+              { energy_type_id: 1, name: 'Grass' },
+              { energy_type_id: 11, name: 'None' },
+            ],
+          };
+        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1') return { rows: [] };
+        if (sql.includes('FROM sets WHERE api_id')) return { rows: [] };
+        if (sql.includes('INSERT INTO sets')) return { rows: [{ set_id: 10 }] };
+        if (sql.includes('FROM cards WHERE api_id')) return { rows: [] };
         if (sql.includes('FROM cards') && sql.includes('set_id'))
           return { rows: [{ card_id: 50 }] };
-        if (sql.includes('UPDATE cards'))
-          return { rows: [] };
+        if (sql.includes('UPDATE cards')) return { rows: [] };
         return { rows: [] };
       });
 
@@ -470,24 +468,22 @@ describe('importService', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (mockClient.query as any).mockImplementation(async (text: string) => {
         const sql = typeof text === 'string' ? text : '';
-        if (sql.includes('FROM rarities'))
-          return { rows: [{ rarity_id: 1, name: 'Common' }] };
+        if (sql.includes('FROM rarities')) return { rows: [{ rarity_id: 1, name: 'Common' }] };
         if (sql.includes('FROM card_types'))
           return { rows: [{ card_type_id: 1, name: 'Pokémon' }] };
         if (sql.includes('FROM energy_types'))
-          return { rows: [{ energy_type_id: 1, name: 'Grass' }, { energy_type_id: 11, name: 'None' }] };
-        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1')
-          return { rows: [] };
-        if (sql.includes('FROM sets WHERE api_id'))
-          return { rows: [] };
-        if (sql.includes('INSERT INTO sets'))
-          return { rows: [{ set_id: 10 }] };
-        if (sql.includes('FROM cards WHERE api_id'))
-          return { rows: [] };
-        if (sql.includes('FROM cards') && sql.includes('set_id'))
-          return { rows: [] };
-        if (sql.includes('INSERT INTO cards'))
-          throw new Error('DB insert failed');
+          return {
+            rows: [
+              { energy_type_id: 1, name: 'Grass' },
+              { energy_type_id: 11, name: 'None' },
+            ],
+          };
+        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1') return { rows: [] };
+        if (sql.includes('FROM sets WHERE api_id')) return { rows: [] };
+        if (sql.includes('INSERT INTO sets')) return { rows: [{ set_id: 10 }] };
+        if (sql.includes('FROM cards WHERE api_id')) return { rows: [] };
+        if (sql.includes('FROM cards') && sql.includes('set_id')) return { rows: [] };
+        if (sql.includes('INSERT INTO cards')) throw new Error('DB insert failed');
         return { rows: [] };
       });
 
@@ -519,27 +515,22 @@ describe('importService', () => {
         if (sql.includes('FROM card_types'))
           return { rows: [{ card_type_id: 1, name: 'Pokémon' }] };
         if (sql.includes('FROM energy_types'))
-          return { rows: [{ energy_type_id: 1, name: 'Grass' }, { energy_type_id: 11, name: 'None' }] };
-        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1')
-          return { rows: [] };
-        if (sql.includes('FROM sets WHERE api_id'))
-          return { rows: [] };
-        if (sql.includes('INSERT INTO sets'))
-          return { rows: [{ set_id: 10 }] };
-        if (sql === 'SELECT rarity_id FROM rarities WHERE name = $1')
-          return { rows: [] };
-        if (sql.includes('FROM rarities WHERE code'))
-          return { rows: [] };
-        if (sql.includes("nextval('rarities_rarity_id_seq')"))
-          return { rows: [{ id: 50 }] };
-        if (sql.includes('INSERT INTO rarities'))
-          return { rows: [] };
-        if (sql.includes('FROM cards WHERE api_id'))
-          return { rows: [] };
-        if (sql.includes('FROM cards') && sql.includes('set_id'))
-          return { rows: [] };
-        if (sql.includes('INSERT INTO cards'))
-          return { rows: [{ card_id: 100 }] };
+          return {
+            rows: [
+              { energy_type_id: 1, name: 'Grass' },
+              { energy_type_id: 11, name: 'None' },
+            ],
+          };
+        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1') return { rows: [] };
+        if (sql.includes('FROM sets WHERE api_id')) return { rows: [] };
+        if (sql.includes('INSERT INTO sets')) return { rows: [{ set_id: 10 }] };
+        if (sql === 'SELECT rarity_id FROM rarities WHERE name = $1') return { rows: [] };
+        if (sql.includes('FROM rarities WHERE code')) return { rows: [] };
+        if (sql.includes("nextval('rarities_rarity_id_seq')")) return { rows: [{ id: 50 }] };
+        if (sql.includes('INSERT INTO rarities')) return { rows: [] };
+        if (sql.includes('FROM cards WHERE api_id')) return { rows: [] };
+        if (sql.includes('FROM cards') && sql.includes('set_id')) return { rows: [] };
+        if (sql.includes('INSERT INTO cards')) return { rows: [{ card_id: 100 }] };
         return { rows: [] };
       });
 
@@ -568,23 +559,23 @@ describe('importService', () => {
       (mockClient.query as any).mockImplementation(async (text: string) => {
         const sql = typeof text === 'string' ? text : '';
         if (sql.includes('FROM rarities'))
-          return { rows: [{ rarity_id: 1, name: 'Common' }, { rarity_id: 99, name: 'Unknown' }] };
+          return {
+            rows: [
+              { rarity_id: 1, name: 'Common' },
+              { rarity_id: 99, name: 'Unknown' },
+            ],
+          };
         if (sql.includes('FROM card_types'))
           return { rows: [{ card_type_id: 1, name: 'Pokémon' }] };
         if (sql.includes('FROM energy_types'))
           return { rows: [{ energy_type_id: 11, name: 'None' }] };
-        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1')
-          return { rows: [] };
-        if (sql.includes('FROM sets WHERE api_id'))
-          return { rows: [] };
-        if (sql.includes('INSERT INTO sets'))
-          return { rows: [{ set_id: 10 }] };
-        if (sql.includes('FROM cards WHERE api_id'))
-          return { rows: [] };
+        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1') return { rows: [] };
+        if (sql.includes('FROM sets WHERE api_id')) return { rows: [] };
+        if (sql.includes('INSERT INTO sets')) return { rows: [{ set_id: 10 }] };
+        if (sql.includes('FROM cards WHERE api_id')) return { rows: [] };
         if (sql.includes('FROM cards') && sql.includes('set_id'))
           return { rows: [{ card_id: 50 }] };
-        if (sql.includes('UPDATE cards'))
-          return { rows: [] };
+        if (sql.includes('UPDATE cards')) return { rows: [] };
         return { rows: [] };
       });
 
@@ -600,20 +591,15 @@ describe('importService', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (mockClient.query as any).mockImplementation(async (text: string) => {
         const sql = typeof text === 'string' ? text : '';
-        if (sql.includes('FROM rarities'))
-          return { rows: [{ rarity_id: 99, name: 'Unknown' }] };
+        if (sql.includes('FROM rarities')) return { rows: [{ rarity_id: 99, name: 'Unknown' }] };
         if (sql.includes('FROM card_types'))
           return { rows: [{ card_type_id: 1, name: 'Pokémon' }] };
         if (sql.includes('FROM energy_types'))
           return { rows: [{ energy_type_id: 11, name: 'None' }] };
-        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1')
-          return { rows: [] };
-        if (sql.includes('FROM sets WHERE api_id'))
-          return { rows: [] };
-        if (sql.includes('INSERT INTO sets'))
-          return { rows: [{ set_id: 10 }] };
-        if (sql.includes('FROM cards WHERE api_id'))
-          return { rows: [{ card_id: 100 }] };
+        if (sql === 'SELECT 1 FROM sets WHERE api_id = $1') return { rows: [] };
+        if (sql.includes('FROM sets WHERE api_id')) return { rows: [] };
+        if (sql.includes('INSERT INTO sets')) return { rows: [{ set_id: 10 }] };
+        if (sql.includes('FROM cards WHERE api_id')) return { rows: [{ card_id: 100 }] };
         return { rows: [] };
       });
 
