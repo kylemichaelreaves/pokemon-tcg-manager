@@ -11,6 +11,7 @@ import type { PoolClient } from 'pg';
 
 const TCGDEX_API_BASE = 'https://api.tcgdex.net/v2/en';
 const DEFAULT_REQUEST_DELAY_MS = 100;
+const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
 
 // ── Public types ───────────────────────────────────────────
 
@@ -77,13 +78,18 @@ async function fetchWithRetry<T>(
   url: string,
   rateLimiter: RateLimiter,
   maxRetries: number = 3,
+  timeoutMs: number = DEFAULT_REQUEST_TIMEOUT_MS,
 ): Promise<T> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     await rateLimiter.throttle();
 
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
     try {
       const response = await fetch(url, {
         headers: { Accept: 'application/json' },
+        signal: controller.signal,
       });
 
       if (response.status === 429) {
@@ -99,12 +105,19 @@ async function fetchWithRetry<T>(
 
       return (await response.json()) as T;
     } catch (err) {
-      if (attempt === maxRetries) throw err;
+      const message =
+        err instanceof DOMException && err.name === 'AbortError'
+          ? `Request timed out after ${timeoutMs}ms`
+          : err instanceof Error
+            ? err.message
+            : String(err);
+
+      if (attempt === maxRetries) throw new Error(message);
       const delay = Math.pow(2, attempt) * 1000;
-      console.warn(
-        `Attempt ${attempt} failed: ${err instanceof Error ? err.message : err}. Retrying in ${delay}ms...`,
-      );
+      console.warn(`Attempt ${attempt} failed: ${message}. Retrying in ${delay}ms...`);
       await sleep(delay);
+    } finally {
+      clearTimeout(timer);
     }
   }
   throw new Error('Unreachable');
@@ -544,6 +557,185 @@ async function upsertCardQuick(
   return 'imported';
 }
 
+// ── Batch helpers ──────────────────────────────────────────
+
+async function fetchBatchCards(
+  batch: TcgdexCardSummary[],
+  apiSetId: string,
+  rateLimiter: RateLimiter,
+  errors: ImportResult['errors'],
+): Promise<Map<string, TcgdexCard>> {
+  const fullCards = new Map<string, TcgdexCard>();
+  for (const cardSummary of batch) {
+    try {
+      const fullCard = await fetchCard(cardSummary.id, rateLimiter);
+      fullCards.set(cardSummary.id, fullCard);
+    } catch (err) {
+      errors.push({
+        setId: apiSetId,
+        cardId: cardSummary.id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+  return fullCards;
+}
+
+async function upsertSingleCard(
+  cardSummary: TcgdexCardSummary,
+  fullCards: Map<string, TcgdexCard>,
+  setId: number,
+  officialCount: number,
+  quick: boolean,
+  force: boolean,
+  cache: LookupCache,
+  client: PoolClient,
+  lookups: ImportResult['lookupTablesExtended'],
+): Promise<'imported' | 'updated' | 'skipped' | null> {
+  if (quick) {
+    return upsertCardQuick(cardSummary, setId, officialCount, cache, client, force, lookups);
+  }
+  const fullCard = fullCards.get(cardSummary.id);
+  if (!fullCard) return null; // fetch failed; error already recorded
+  return upsertCardFull(fullCard, setId, officialCount, cache, client, force, lookups);
+}
+
+async function processCardBatch(
+  batch: TcgdexCardSummary[],
+  fullCards: Map<string, TcgdexCard>,
+  setId: number,
+  apiSetId: string,
+  officialCount: number,
+  quick: boolean,
+  force: boolean,
+  cache: LookupCache,
+  client: PoolClient,
+  result: ImportResult,
+): Promise<void> {
+  await client.query('BEGIN');
+  try {
+    for (const cardSummary of batch) {
+      try {
+        const action = await upsertSingleCard(
+          cardSummary,
+          fullCards,
+          setId,
+          officialCount,
+          quick,
+          force,
+          cache,
+          client,
+          result.lookupTablesExtended,
+        );
+        if (action === 'imported') result.cardsImported++;
+        else if (action === 'updated') result.cardsUpdated++;
+        else if (action === 'skipped') result.cardsSkipped++;
+      } catch (err) {
+        result.errors.push({
+          setId: apiSetId,
+          cardId: cardSummary.id,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    result.errors.push({
+      setId: apiSetId,
+      error: `Batch rollback: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+}
+
+// ── Per-set processing ─────────────────────────────────────
+
+async function processSet(
+  apiSet: TcgdexSetSummary,
+  index: number,
+  total: number,
+  quick: boolean,
+  force: boolean,
+  batchSize: number,
+  cache: LookupCache,
+  client: PoolClient,
+  rateLimiter: RateLimiter,
+  result: ImportResult,
+  onProgress?: ImportOptions['onProgress'],
+): Promise<void> {
+  onProgress?.({
+    phase: 'sets',
+    setId: apiSet.id,
+    setName: apiSet.name,
+    current: index + 1,
+    total,
+    message: `Processing set: ${apiSet.name} (${apiSet.id})`,
+  });
+
+  // When not forcing, skip sets that already exist before fetching detail
+  if (!force) {
+    const existing = await client.query('SELECT 1 FROM sets WHERE api_id = $1', [apiSet.id]);
+    if (existing.rows.length > 0) {
+      result.setsSkipped++;
+      return;
+    }
+  }
+
+  const setDetail = await fetchSetDetail(apiSet.id, rateLimiter);
+  const setResult = await upsertSet(setDetail, client, force);
+
+  if (setResult.action === 'skipped') {
+    result.setsSkipped++;
+    return;
+  }
+  if (setResult.action === 'imported') result.setsImported++;
+  if (setResult.action === 'updated') result.setsImported++;
+
+  const cardSummaries = setDetail.cards || [];
+  const officialCount = setDetail.cardCount.official;
+
+  onProgress?.({
+    phase: 'cards',
+    setId: apiSet.id,
+    setName: apiSet.name,
+    current: 0,
+    total: cardSummaries.length,
+    message: `Importing ${cardSummaries.length} cards for ${apiSet.name}${quick ? ' (quick mode)' : ''}...`,
+  });
+
+  for (let j = 0; j < cardSummaries.length; j += batchSize) {
+    const batch = cardSummaries.slice(j, j + batchSize);
+
+    // In non-quick mode, fetch full card data before opening the transaction
+    // to avoid holding a DB transaction open during slow network I/O.
+    const fullCards = quick
+      ? new Map<string, TcgdexCard>()
+      : await fetchBatchCards(batch, apiSet.id, rateLimiter, result.errors);
+
+    await processCardBatch(
+      batch,
+      fullCards,
+      setResult.setId,
+      apiSet.id,
+      officialCount,
+      quick,
+      force,
+      cache,
+      client,
+      result,
+    );
+
+    onProgress?.({
+      phase: 'cards',
+      setId: apiSet.id,
+      setName: apiSet.name,
+      current: Math.min(j + batchSize, cardSummaries.length),
+      total: cardSummaries.length,
+      message: `${apiSet.name}: ${Math.min(j + batchSize, cardSummaries.length)}/${cardSummaries.length} cards`,
+    });
+  }
+}
+
 // ── Main orchestrator ──────────────────────────────────────
 
 export async function importFromApi(options: ImportOptions = {}): Promise<ImportResult> {
@@ -566,24 +758,13 @@ export async function importFromApi(options: ImportOptions = {}): Promise<Import
     cardsSkipped: 0,
     cardsUpdated: 0,
     errors: [],
-    lookupTablesExtended: {
-      rarities: [],
-      cardTypes: [],
-      energyTypes: [],
-    },
+    lookupTablesExtended: { rarities: [], cardTypes: [], energyTypes: [] },
     duration: 0,
   };
 
-  // 1. Fetch all sets from TCGdex
-  onProgress?.({
-    phase: 'sets',
-    current: 0,
-    total: 0,
-    message: 'Fetching sets from TCGdex...',
-  });
+  onProgress?.({ phase: 'sets', current: 0, total: 0, message: 'Fetching sets from TCGdex...' });
 
   let apiSets = await fetchAllSets(rateLimiter);
-
   if (setIds && setIds.length > 0) {
     apiSets = apiSets.filter((s) => setIds.includes(s.id));
   }
@@ -597,144 +778,35 @@ export async function importFromApi(options: ImportOptions = {}): Promise<Import
 
   if (dryRun) {
     result.setsImported = apiSets.length;
-    let totalCards = 0;
-    for (const s of apiSets) {
-      totalCards += s.cardCount.total;
-    }
-    result.cardsImported = totalCards;
+    result.cardsImported = apiSets.reduce((sum, s) => sum + s.cardCount.total, 0);
     result.duration = Date.now() - startTime;
     return result;
   }
 
-  // 2. Get a client and load lookup cache
   const pool = getPool();
   const client = await pool.connect();
 
   try {
     const cache = await loadLookupCache(client);
 
-    // 3. Process each set
     for (let i = 0; i < apiSets.length; i++) {
-      const apiSet = apiSets[i];
-
-      onProgress?.({
-        phase: 'sets',
-        setId: apiSet.id,
-        setName: apiSet.name,
-        current: i + 1,
-        total: apiSets.length,
-        message: `Processing set: ${apiSet.name} (${apiSet.id})`,
-      });
-
       try {
-        // Fetch set detail for series, release date, and card list
-        const setDetail = await fetchSetDetail(apiSet.id, rateLimiter);
-
-        const setResult = await upsertSet(setDetail, client, force);
-
-        if (setResult.action === 'skipped') {
-          result.setsSkipped++;
-          continue;
-        }
-        if (setResult.action === 'imported') result.setsImported++;
-        if (setResult.action === 'updated') result.setsImported++;
-
-        const cardSummaries = setDetail.cards || [];
-        const officialCount = setDetail.cardCount.official;
-
-        onProgress?.({
-          phase: 'cards',
-          setId: apiSet.id,
-          setName: apiSet.name,
-          current: 0,
-          total: cardSummaries.length,
-          message: `Importing ${cardSummaries.length} cards for ${apiSet.name}${quick ? ' (quick mode)' : ''}...`,
-        });
-
-        // Process cards in batches
-        for (let j = 0; j < cardSummaries.length; j += batchSize) {
-          const batch = cardSummaries.slice(j, j + batchSize);
-
-          // In non-quick mode, fetch full card data before opening the transaction
-          // to avoid holding a DB transaction open during slow network I/O.
-          const fullCards = new Map<string, TcgdexCard>();
-          if (!quick) {
-            for (const cardSummary of batch) {
-              try {
-                const fullCard = await fetchCard(cardSummary.id, rateLimiter);
-                fullCards.set(cardSummary.id, fullCard);
-              } catch (err) {
-                result.errors.push({
-                  setId: apiSet.id,
-                  cardId: cardSummary.id,
-                  error: err instanceof Error ? err.message : String(err),
-                });
-              }
-            }
-          }
-
-          await client.query('BEGIN');
-          try {
-            for (const cardSummary of batch) {
-              try {
-                let action: 'imported' | 'updated' | 'skipped';
-
-                if (quick) {
-                  action = await upsertCardQuick(
-                    cardSummary,
-                    setResult.setId,
-                    officialCount,
-                    cache,
-                    client,
-                    force,
-                    result.lookupTablesExtended,
-                  );
-                } else {
-                  const fullCard = fullCards.get(cardSummary.id);
-                  if (!fullCard) continue; // fetch failed; error already recorded
-                  action = await upsertCardFull(
-                    fullCard,
-                    setResult.setId,
-                    officialCount,
-                    cache,
-                    client,
-                    force,
-                    result.lookupTablesExtended,
-                  );
-                }
-
-                if (action === 'imported') result.cardsImported++;
-                else if (action === 'updated') result.cardsUpdated++;
-                else result.cardsSkipped++;
-              } catch (err) {
-                result.errors.push({
-                  setId: apiSet.id,
-                  cardId: cardSummary.id,
-                  error: err instanceof Error ? err.message : String(err),
-                });
-              }
-            }
-            await client.query('COMMIT');
-          } catch (err) {
-            await client.query('ROLLBACK');
-            result.errors.push({
-              setId: apiSet.id,
-              error: `Batch rollback: ${err instanceof Error ? err.message : String(err)}`,
-            });
-          }
-
-          onProgress?.({
-            phase: 'cards',
-            setId: apiSet.id,
-            setName: apiSet.name,
-            current: Math.min(j + batchSize, cardSummaries.length),
-            total: cardSummaries.length,
-            message: `${apiSet.name}: ${Math.min(j + batchSize, cardSummaries.length)}/${cardSummaries.length} cards`,
-          });
-        }
+        await processSet(
+          apiSets[i],
+          i,
+          apiSets.length,
+          quick,
+          force,
+          batchSize,
+          cache,
+          client,
+          rateLimiter,
+          result,
+          onProgress,
+        );
       } catch (err) {
         result.errors.push({
-          setId: apiSet.id,
+          setId: apiSets[i].id,
           error: err instanceof Error ? err.message : String(err),
         });
       }

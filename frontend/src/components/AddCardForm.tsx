@@ -128,7 +128,7 @@ const AddCardForm: Component<AddCardFormProps> = (props) => {
             <div class="form-group">
               <label>Variant</label>
               <select value={variant()} onChange={(e) => setVariant(e.target.value)}>
-                <For each={[...variantOptions]}>{(v) => <option value={v}>{v}</option>}</For>
+                <For each={variantOptions}>{(v) => <option value={v}>{v}</option>}</For>
               </select>
             </div>
             <div class="form-group">
@@ -143,7 +143,7 @@ const AddCardForm: Component<AddCardFormProps> = (props) => {
             <div class="form-group">
               <label>Condition</label>
               <select value={condition()} onChange={(e) => setCondition(e.target.value)}>
-                <For each={[...conditionOptions]}>{(c) => <option value={c}>{c}</option>}</For>
+                <For each={conditionOptions}>{(c) => <option value={c}>{c}</option>}</For>
               </select>
             </div>
             <div class="form-group">

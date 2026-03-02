@@ -154,7 +154,7 @@ describe('importService', () => {
   let mockPool: jest.Mocked<Pool>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
     jest.restoreAllMocks();
     mockClient = createMockClient();
     mockPool = createMockPool(mockClient);
