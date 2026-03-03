@@ -10,7 +10,9 @@ const PORT = parseInt(process.env.API_PORT || '3001', 10);
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
 const STATIC_IMAGES_DIR = process.env.STATIC_IMAGES_DIR || '';
 
-type Handler = (event: APIGatewayProxyEventV2) => Promise<{ statusCode: number; body: string; headers?: Record<string, string> }>;
+type Handler = (
+  event: APIGatewayProxyEventV2,
+) => Promise<{ statusCode: number; body: string; headers?: Record<string, string> }>;
 
 interface Route {
   method: string;
@@ -24,19 +26,59 @@ const routes: Route[] = [
   { method: 'GET', pattern: /^\/api\/health$/, handler: healthHandler as Handler, params: [] },
 
   // Cards (read-only catalog)
-  { method: 'GET', pattern: /^\/api\/cards$/, handler: cardHandlers.getCards as Handler, params: [] },
-  { method: 'GET', pattern: /^\/api\/cards\/([^/]+)$/, handler: cardHandlers.getCardById as Handler, params: ['id'] },
+  {
+    method: 'GET',
+    pattern: /^\/api\/cards$/,
+    handler: cardHandlers.getCards as Handler,
+    params: [],
+  },
+  {
+    method: 'GET',
+    pattern: /^\/api\/cards\/([^/]+)$/,
+    handler: cardHandlers.getCardById as Handler,
+    params: ['id'],
+  },
 
   // Sets (reference data)
   { method: 'GET', pattern: /^\/api\/sets$/, handler: cardHandlers.getSets as Handler, params: [] },
 
   // Collection (user's owned cards)
-  { method: 'GET', pattern: /^\/api\/collection$/, handler: collectionHandlers.getCollection as Handler, params: [] },
-  { method: 'POST', pattern: /^\/api\/collection$/, handler: collectionHandlers.addToCollection as Handler, params: [] },
-  { method: 'GET', pattern: /^\/api\/collection\/summary$/, handler: collectionHandlers.getCompletionSummary as Handler, params: [] },
-  { method: 'GET', pattern: /^\/api\/collection\/([^/]+)$/, handler: collectionHandlers.getCollectionEntry as Handler, params: ['id'] },
-  { method: 'PUT', pattern: /^\/api\/collection\/([^/]+)$/, handler: collectionHandlers.updateCollectionEntry as Handler, params: ['id'] },
-  { method: 'DELETE', pattern: /^\/api\/collection\/([^/]+)$/, handler: collectionHandlers.removeFromCollection as Handler, params: ['id'] },
+  {
+    method: 'GET',
+    pattern: /^\/api\/collection$/,
+    handler: collectionHandlers.getCollection as Handler,
+    params: [],
+  },
+  {
+    method: 'POST',
+    pattern: /^\/api\/collection$/,
+    handler: collectionHandlers.addToCollection as Handler,
+    params: [],
+  },
+  {
+    method: 'GET',
+    pattern: /^\/api\/collection\/summary$/,
+    handler: collectionHandlers.getCompletionSummary as Handler,
+    params: [],
+  },
+  {
+    method: 'GET',
+    pattern: /^\/api\/collection\/([^/]+)$/,
+    handler: collectionHandlers.getCollectionEntry as Handler,
+    params: ['id'],
+  },
+  {
+    method: 'PUT',
+    pattern: /^\/api\/collection\/([^/]+)$/,
+    handler: collectionHandlers.updateCollectionEntry as Handler,
+    params: ['id'],
+  },
+  {
+    method: 'DELETE',
+    pattern: /^\/api\/collection\/([^/]+)$/,
+    handler: collectionHandlers.removeFromCollection as Handler,
+    params: ['id'],
+  },
 ];
 
 const server = http.createServer(async (req, res) => {

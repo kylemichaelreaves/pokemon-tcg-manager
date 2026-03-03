@@ -1,6 +1,6 @@
 # Pokémon TCG Manager
 
-An app to manage Pokémon TCG 151 MEW & SVA2 
+An app to manage Pokémon TCG 151 MEW & SVA2
 
 ## Tech Stack
 
@@ -130,19 +130,19 @@ npm run format:check
 
 ## API Endpoints
 
-| Method | Path                                | Description              |
-| ------ | ----------------------------------- | ------------------------ |
-| GET    | `/api/health`                       | Health check             |
-| GET    | `/api/cards`                        | List cards (paginated)   |
-| GET    | `/api/cards/:id`                    | Get card by ID           |
-| POST   | `/api/cards`                        | Create a card            |
-| PUT    | `/api/cards/:id`                    | Update a card            |
-| DELETE | `/api/cards/:id`                    | Delete a card            |
-| GET    | `/api/collections`                  | List collections         |
-| POST   | `/api/collections`                  | Create a collection      |
-| GET    | `/api/collections/:id`              | Get collection + cards   |
-| POST   | `/api/collections/:id/cards`        | Add card to collection   |
-| DELETE | `/api/collections/:id/cards/:cardId`| Remove card              |
+| Method | Path                                 | Description            |
+| ------ | ------------------------------------ | ---------------------- |
+| GET    | `/api/health`                        | Health check           |
+| GET    | `/api/cards`                         | List cards (paginated) |
+| GET    | `/api/cards/:id`                     | Get card by ID         |
+| POST   | `/api/cards`                         | Create a card          |
+| PUT    | `/api/cards/:id`                     | Update a card          |
+| DELETE | `/api/cards/:id`                     | Delete a card          |
+| GET    | `/api/collections`                   | List collections       |
+| POST   | `/api/collections`                   | Create a collection    |
+| GET    | `/api/collections/:id`               | Get collection + cards |
+| POST   | `/api/collections/:id/cards`         | Add card to collection |
+| DELETE | `/api/collections/:id/cards/:cardId` | Remove card            |
 
 ### Query Parameters (GET /api/cards)
 
@@ -204,7 +204,7 @@ I had to `unset PYENV_VERSION` in order to set the version to `3.14.2`
 ```bash
 # First-time setup (if virtualenv doesn't exist)
 cd scripts/
-pyenv local 3.14.2 
+pyenv local 3.14.2
 pyenv exec python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt

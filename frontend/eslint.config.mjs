@@ -1,5 +1,5 @@
 import { baseConfig, sharedRules, sharedIgnores } from '../config/eslint.base.mjs';
-import solid from 'eslint-plugin-solid/configs/typescript.js';
+import solid from 'eslint-plugin-solid/configs/typescript';
 
 export default [
   ...baseConfig,

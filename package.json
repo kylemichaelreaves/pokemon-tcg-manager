@@ -1,7 +1,10 @@
 {
   "name": "pokemon-tcg-manager",
   "private": true,
-  "workspaces": ["frontend", "backend"],
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
     "dev": "docker compose up --build",
     "dev:frontend": "npm run dev --workspace=frontend",
@@ -16,6 +19,8 @@
     "format": "prettier --config config/.prettierrc.json --write .",
     "format:check": "prettier --config config/.prettierrc.json --check .",
     "db:migrate": "npm run migrate --workspace=backend",
+    "db:import": "npm run import --workspace=backend",
+    "db:import:dry-run": "npm run import:dry-run --workspace=backend",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down",
     "docker:test": "docker compose -f docker-compose.test.yml up --build --abort-on-container-exit"

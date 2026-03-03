@@ -9,6 +9,8 @@
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "migrate": "tsx src/utils/migrate.ts",
+    "import": "tsx src/scripts/importCards.ts",
+    "import:dry-run": "tsx src/scripts/importCards.ts --dry-run",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix"
   },
@@ -27,6 +29,7 @@
     "eslint-plugin-prettier": "^5.2.1",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.1"

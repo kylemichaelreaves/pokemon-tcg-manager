@@ -1,7 +1,14 @@
 import type { Component } from 'solid-js';
 import { For, Show, Switch, Match } from 'solid-js';
 import CardItem from './CardItem';
-import { cards, currentPage, setCurrentPage, filters, updateFilter, clearFilters } from '../stores/cardStore';
+import {
+  cards,
+  currentPage,
+  setCurrentPage,
+  filters,
+  updateFilter,
+  clearFilters,
+} from '../stores/cardStore';
 
 const CardList: Component = () => {
   return (
@@ -86,9 +93,7 @@ const CardList: Component = () => {
           <div class="loading">Loading cards...</div>
         </Match>
         <Match when={cards.error}>
-          <div class="error-message">
-            Failed to load cards: {(cards.error as Error).message}
-          </div>
+          <div class="error-message">Failed to load cards: {(cards.error as Error).message}</div>
         </Match>
         <Match when={cards()}>
           <Show
@@ -100,14 +105,18 @@ const CardList: Component = () => {
               </div>
             }
           >
-            <div style={{ 'font-size': '0.85rem', color: 'var(--color-text-muted)', 'margin-bottom': '0.5rem' }}>
+            <div
+              style={{
+                'font-size': '0.85rem',
+                color: 'var(--color-text-muted)',
+                'margin-bottom': '0.5rem',
+              }}
+            >
               {cards()!.total} cards found
             </div>
 
             <div class="card-grid">
-              <For each={cards()!.data}>
-                {(card) => <CardItem card={card} />}
-              </For>
+              <For each={cards()!.data}>{(card) => <CardItem card={card} />}</For>
             </div>
 
             <Show when={cards()!.total_pages > 1}>

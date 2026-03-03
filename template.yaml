@@ -281,7 +281,7 @@ Resources:
 Outputs:
   ApiUrl:
     Description: API Gateway endpoint URL
-    Value: !Sub "https://${PokemonApi}.execute-api.${AWS::Region}.amazonaws.com"
+    Value: !Sub 'https://${PokemonApi}.execute-api.${AWS::Region}.amazonaws.com'
   CardImagesBucketName:
     Description: S3 bucket for card images
     Value: !Ref CardImagesBucket

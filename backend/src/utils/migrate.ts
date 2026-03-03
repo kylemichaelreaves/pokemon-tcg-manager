@@ -8,7 +8,10 @@ async function migrate(): Promise<void> {
   console.log('Running migrations...');
 
   const migrationsDir = path.join(__dirname, '..', '..', '..', 'db', 'migrations');
-  const files = fs.readdirSync(migrationsDir).filter((f) => f.endsWith('.sql')).sort();
+  const files = fs
+    .readdirSync(migrationsDir)
+    .filter((f) => f.endsWith('.sql'))
+    .sort();
 
   for (const file of files) {
     const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf-8');

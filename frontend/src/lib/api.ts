@@ -48,8 +48,10 @@ export const api = {
         if (f.rarity) searchParams.set('rarity', f.rarity);
         if (f.card_type) searchParams.set('card_type', f.card_type);
         if (f.energy_type) searchParams.set('energy_type', f.energy_type);
-        if (f.is_pokemon_ex !== undefined) searchParams.set('is_pokemon_ex', String(f.is_pokemon_ex));
-        if (f.is_secret_rare !== undefined) searchParams.set('is_secret_rare', String(f.is_secret_rare));
+        if (f.is_pokemon_ex !== undefined)
+          searchParams.set('is_pokemon_ex', String(f.is_pokemon_ex));
+        if (f.is_secret_rare !== undefined)
+          searchParams.set('is_secret_rare', String(f.is_secret_rare));
         if (f.is_promo !== undefined) searchParams.set('is_promo', String(f.is_promo));
         if (f.search) searchParams.set('search', f.search);
       }

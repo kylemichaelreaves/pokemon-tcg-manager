@@ -1,5 +1,5 @@
-import { APIGatewayProxyEventV2 } from 'aws-lambda';
-import { success, error, parseBody, getPathParam, getQueryParams } from '../../middleware/response';
+import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
+import { success, error, parseBody, getPathParam, getQueryParams } from '../middleware/response';
 
 function makeEvent(overrides: Partial<APIGatewayProxyEventV2> = {}): APIGatewayProxyEventV2 {
   return {
@@ -17,7 +17,7 @@ function makeEvent(overrides: Partial<APIGatewayProxyEventV2> = {}): APIGatewayP
 describe('Response Middleware', () => {
   describe('success', () => {
     it('should return a success response with default 200 status', () => {
-      const result = success({ message: 'ok' });
+      const result = success({ message: 'ok' }) as APIGatewayProxyStructuredResultV2;
       expect(result.statusCode).toBe(200);
       const body = JSON.parse(result.body as string);
       expect(body.success).toBe(true);
@@ -25,14 +25,14 @@ describe('Response Middleware', () => {
     });
 
     it('should accept custom status code', () => {
-      const result = success({ id: '1' }, 201);
+      const result = success({ id: '1' }, 201) as APIGatewayProxyStructuredResultV2;
       expect(result.statusCode).toBe(201);
     });
   });
 
   describe('error', () => {
     it('should return an error response', () => {
-      const result = error('Something went wrong', 500);
+      const result = error('Something went wrong', 500) as APIGatewayProxyStructuredResultV2;
       expect(result.statusCode).toBe(500);
       const body = JSON.parse(result.body as string);
       expect(body.success).toBe(false);
@@ -40,7 +40,7 @@ describe('Response Middleware', () => {
     });
 
     it('should default to 400 status', () => {
-      const result = error('Bad request');
+      const result = error('Bad request') as APIGatewayProxyStructuredResultV2;
       expect(result.statusCode).toBe(400);
     });
   });

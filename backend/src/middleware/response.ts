@@ -35,8 +35,6 @@ export function getPathParam(event: APIGatewayProxyEventV2, param: string): stri
   return value;
 }
 
-export function getQueryParams(
-  event: APIGatewayProxyEventV2,
-): Record<string, string | undefined> {
+export function getQueryParams(event: APIGatewayProxyEventV2): Record<string, string | undefined> {
   return event.queryStringParameters || {};
 }
