@@ -74,7 +74,7 @@ Examples:
 async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
 
-  options.onProgress = (event: ImportProgressEvent) => {
+  options.onProgress = (event: ImportProgressEvent): void => {
     const prefix = event.phase === 'sets' ? '[sets]' : '[cards]';
     const progress = event.total > 0 ? ` (${event.current}/${event.total})` : '';
     console.log(`${prefix}${progress} ${event.message}`);
