@@ -508,7 +508,7 @@ describe('importService', () => {
 
     it('should create new rarity when not in cache or DB', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (mockClient.query as any).mockImplementation(async (text: string, params?: unknown[]) => {
+      (mockClient.query as any).mockImplementation(async (text: string, _params?: unknown[]) => {
         const sql = typeof text === 'string' ? text : '';
         if (sql === 'SELECT rarity_id, name FROM rarities')
           return { rows: [{ rarity_id: 1, name: 'Common' }] };
