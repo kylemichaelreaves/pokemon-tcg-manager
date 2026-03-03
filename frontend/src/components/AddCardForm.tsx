@@ -4,7 +4,7 @@ import { api } from '../lib/api';
 const variantOptions = [
   'Standard',
   'Reverse Holo',
-  'Poke Ball Mirror',
+  'Poké Ball Mirror',
   'Master Ball Mirror',
   'Cosmos Holo',
   'Promo',
